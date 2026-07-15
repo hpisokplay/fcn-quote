@@ -36,21 +36,48 @@
   .undl{ text-align:center; padding:10px; font-weight:900; font-size:15px; border-bottom:1px solid #e2e8f0; }
   .undl small{ color:#64748b; font-weight:700; }
   /* 走勢圖橫帶：數字在左、圖在右 */
-  .stk-info{ width:29%; flex:0 0 29%; border-right:1px solid #eef1f5; padding:6px 7px; }
-  .stk-info .row{ padding:3.5px 0; border-bottom:1px solid #f1f5f9; }
+  .stk-info{ width:26%; flex:0 0 26%; border-right:1px solid #eef1f5; padding:5px 6px; display:flex; flex-direction:column; justify-content:center; }
+  .stk-info .row{ padding:3px 0; border-bottom:1px solid #f1f5f9; }
   .stk-info .row:last-child{ border-bottom:none; }
-  .stk-info .row span{ display:block; font-size:9.5px; font-weight:800; color:#64748b; }
-  .stk-info .row b{ display:block; font-size:14px; font-weight:900; color:var(--navy); margin-top:0; letter-spacing:.2px; }
+  .stk-info .row span{ display:block; font-size:9px; font-weight:800; color:#64748b; }
+  .stk-info .row b{ display:block; font-size:13px; font-weight:900; color:var(--navy); margin-top:0; letter-spacing:.2px; }
   .stk-info .row b.ko{ color:var(--gold); } .stk-info .row b.ki{ color:#dc2626; }
-  .stk-chart{ flex:1; min-width:0; display:flex; align-items:center; padding:4px 4px 4px 2px; }
+  .stk-chart{ flex:1; min-width:0; display:flex; align-items:stretch; padding:4px 4px 4px 2px; }
+  .stk-chart svg{ width:100%; }
   @media print{
-    @page{ size:A4 portrait; margin:9mm; }
-    body{ background:#fff; }
+    @page{ size:A4 portrait; margin:11mm; }
+    html,body{ background:#fff; }
     .no-print{ display:none !important; }
-    .wrap{ max-width:none; }
-    .sheet{ box-shadow:none !important; border:none !important; }
-    .pg2{ page-break-before:always; }
-    .stkband{ page-break-inside:avoid; }
+    .wrap{ max-width:none; padding:0 !important; }
+    .sheet{ box-shadow:none !important; border:none !important; border-radius:0 !important; }
+    /* ===== 第 1 頁：詢價單 填滿 A4 ===== */
+    .pg1{ min-height:262mm; display:flex; flex-direction:column; }
+    .pg1 > div:first-child{ padding-top:6mm !important; padding-bottom:6mm !important; }
+    .pg1 h1{ font-size:34px !important; }
+    .pg1 h1 + p{ font-size:12px !important; letter-spacing:5px !important; }
+    .pg1 .p-4{ flex:1; display:flex; flex-direction:column; justify-content:center; padding:4mm 3mm !important; }
+    .cond{ font-size:18px !important; }
+    .cond td{ padding:15px 10px !important; }
+    .subttl{ font-size:19px !important; padding:14px !important; margin-top:22px !important; }
+    .undl{ font-size:21px !important; padding:16px !important; }
+    .undl small{ font-size:15px; }
+    /* ===== 第 2 頁：走勢圖 填滿 A4（寬短圖，最多 5 檔）===== */
+    .pg2{ page-break-before:always; min-height:262mm; display:flex; flex-direction:column; }
+    .pg2 > div:first-child{ padding:6mm 0 3mm !important; }
+    .pg2 h2{ font-size:26px !important; }
+    .pg2 h2 span{ font-size:15px !important; }
+    .pg2 .space-y-3{ flex:1; display:flex; flex-direction:column; justify-content:center; gap:2mm; margin-top:2mm !important; }
+    .stkband{ page-break-inside:avoid; border-width:1.5px !important; }
+    .stkband > div:first-child{ padding:3px 18px !important; }
+    .stkband > div:first-child .text-lg{ font-size:18px !important; }
+    .stkband > div:first-child .text-xs{ font-size:13px !important; }
+    .stk-info{ width:24% !important; flex-basis:24% !important; padding:4px 14px !important; justify-content:center !important; }
+    .stk-info .row{ display:flex !important; justify-content:space-between !important; align-items:baseline !important; padding:2px 0 !important; }
+    .stk-info .row span{ display:inline !important; font-size:11px !important; white-space:nowrap; margin-right:6px; }
+    .stk-info .row b{ display:inline !important; font-size:17px !important; margin-top:0 !important; white-space:nowrap; }
+    .stkband .items-stretch{ height:33mm !important; }
+    .stk-chart{ padding:6px 10px 6px 4px !important; }
+    .stk-chart svg{ height:100% !important; }
   }
 </style>
 </head>
@@ -249,7 +276,7 @@ createApp({
     },
     lastClose(arr){ for(let i=arr.length-1;i>=0;i--){ if(arr[i]!=null) return arr[i]; } return 0; },
     chartSVG(hist, close){
-      const W=480,H=212,padL=6,padR=70,padT=15,padB=24;
+      const W=480,H=112,padL=6,padR=70,padT=10,padB=18;
       const nowSec=Math.floor(Date.now()/1000), cutoff=nowSec-274*86400;
       const pts=[];
       for(let j=0;j<hist.timestamp.length;j++){ const t=hist.timestamp[j],c=hist.close[j]; if(t>=cutoff&&c!=null&&c>0) pts.push({t,c}); }
