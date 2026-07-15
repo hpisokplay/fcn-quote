@@ -32,9 +32,10 @@
   .cond .vl{ background:#fff; text-align:center; color:var(--navy); }
   .cond .hl{ color:#1d4ed8; }
   .cond .rd{ color:#dc2626; }
-  .subttl{ background:#e7ecf4; color:var(--navy); text-align:center; font-weight:900; padding:9px; font-size:15px; }
-  .undl{ text-align:center; padding:10px; font-weight:900; font-size:15px; border-bottom:1px solid #e2e8f0; }
-  .undl small{ color:#64748b; font-weight:700; }
+  .undl-tbl{ width:100%; border-collapse:collapse; }
+  .undl-tbl th{ background:var(--navy); color:#fff; text-align:center; font-weight:900; font-size:15px; padding:11px; border:1.5px solid #111827; }
+  .undl-tbl td{ text-align:center; font-weight:900; font-size:15px; color:#0f2748; padding:12px; border:1.5px solid #111827; }
+  .undl-tbl td small{ color:#64748b; font-weight:700; }
   /* 走勢圖橫帶：數字在左、圖在右 */
   .stk-info{ width:26%; flex:0 0 26%; border-right:1px solid #eef1f5; padding:5px 6px; display:flex; flex-direction:column; justify-content:center; }
   .stk-info .row{ padding:3px 0; border-bottom:1px solid #f1f5f9; }
@@ -59,9 +60,10 @@
     .pg1 .p-4{ flex:1; display:flex; flex-direction:column; justify-content:center; padding:5mm 2mm !important; }
     .cond{ font-size:17px !important; }
     .cond td{ padding:14px 8px !important; }
-    .subttl{ font-size:18px !important; padding:13px !important; margin-top:18px !important; }
-    .undl{ font-size:20px !important; padding:15px !important; }
-    .undl small{ font-size:15px; }
+    .undl-tbl{ margin-top:18px !important; }
+    .undl-tbl th{ font-size:18px !important; padding:15px !important; }
+    .undl-tbl td{ font-size:20px !important; padding:16px !important; }
+    .undl-tbl td small{ font-size:15px; }
     /* 第 2 頁起：走勢圖（圖填滿格子、自然分頁） */
     .pg2{ page-break-before:always; }
     .pg2 > div:first-child{ padding:4mm 0 2mm !important; }
@@ -150,10 +152,12 @@
             <tr><td class="lb">天期（月）</td><td class="vl">{{ tenor || '—' }}</td><td class="lb">保證領息（月）</td><td class="vl rd">{{ lockM || '—' }}</td></tr>
             <tr><td class="lb">年化報酬率</td><td class="vl">{{ pct(coupon) }}</td><td class="lb">觀察頻率</td><td class="vl rd">{{ eki ? '到期觀察' : '每日觀察' }}</td></tr>
           </table>
-          <div class="subttl mt-3 rounded-t-lg">連結標的</div>
-          <div>
-            <div v-for="s in results" :key="s.code" class="undl"><span style="color:#1d4ed8">{{ s.code }}</span> <small>{{ s.name }}</small></div>
-          </div>
+          <table class="undl-tbl mt-3">
+            <thead><tr><th>連結標的</th></tr></thead>
+            <tbody>
+              <tr v-for="s in results" :key="s.code"><td><span style="color:#1d4ed8">{{ s.code }}</span> <small>{{ s.name }}</small></td></tr>
+            </tbody>
+          </table>
         </div>
         <div class="text-center text-[10px] text-gray-400 font-bold px-5 pb-5 leading-relaxed">◎ 期初＝標的前一日收盤價，KO／Strike／KI 價為收盤×對應百分比<br>◎ 本報價僅供內部參考，一切以實際成交狀況為主</div>
       </div>
