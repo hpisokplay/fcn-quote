@@ -175,7 +175,7 @@
                 <span class="text-sm font-bold opacity-85 ml-1">{{ s.name }}</span>
                 <span v-if="s.ok" class="opacity-75 ml-1 whitespace-nowrap" style="font-size:12px">· 收盤價 {{ fp(s.close) }} 元</span>
               </div>
-              <div class="text-[10px] font-black text-white/60 whitespace-nowrap ml-2">標的 {{ idx+1 }}</div>
+              <div class="text-[11px] font-black text-white/60 whitespace-nowrap ml-2">{{ ['第一檔','第二檔','第三檔','第四檔','第五檔'][idx] }}</div>
             </div>
             <div v-if="s.ok" class="stk-chart-full" v-html="s.svg"></div>
             <div v-else class="p-5 text-center text-gray-400 font-bold text-sm">此標的暫時無法取得走勢資料<br><span class="text-xs text-gray-300">（請確認代號，或稍後再試）</span></div>
@@ -303,7 +303,7 @@ createApp({
         '<defs><linearGradient id="g'+Math.abs(close*1000|0)+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2563eb" stop-opacity="0.26"/><stop offset="1" stop-color="#2563eb" stop-opacity="0.01"/></linearGradient></defs>'+
         grid+'<path d="'+area+'" fill="url(#g'+Math.abs(close*1000|0)+')"/>'+
         bl(ko,'#b8935a','KO 出場價',this.koP)+bl(strike,'#64748b','Strike 履約',this.strikeP,true)+bl(ki,'#dc2626','KI 下限價',this.kiP,true)+
-        '<path d="'+line+'" fill="none" stroke="#1d4ed8" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>'+
+        '<path d="'+line+'" fill="none" stroke="#1d4ed8" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>'+
         '<circle cx="'+lx+'" cy="'+ly+'" r="3.6" fill="#1d4ed8" stroke="#fff" stroke-width="1.5"/>'+hilo+'</svg>';
     },
     printOut(){ window.print(); }
