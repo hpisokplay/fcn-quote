@@ -44,6 +44,8 @@
   .stk-info .row b.ko{ color:var(--gold); } .stk-info .row b.ki{ color:#dc2626; }
   .stk-chart{ flex:1; min-width:0; display:flex; align-items:stretch; padding:4px 4px 4px 2px; }
   .stk-chart svg{ width:100%; }
+  .stk-chart-full{ padding:6px 8px 4px; }
+  .stk-chart-full svg{ width:100%; display:block; }
   @media print{
     @page{ size:A4 portrait; margin:11mm; }
     html,body{ background:#fff; }
@@ -164,19 +166,15 @@
         </div>
         <div class="space-y-3 mt-3">
           <div v-for="(s,idx) in results" :key="'c'+s.code" class="stkband rounded-2xl border border-gray-200 overflow-hidden">
-            <div class="flex justify-between items-center px-3 py-2" style="background:var(--navy)">
-              <div class="text-white"><span class="text-lg font-black">{{ s.code }}</span> <span class="text-xs font-bold opacity-70">{{ s.name }}</span></div>
-              <div class="text-[10px] font-black text-white/60">標的 {{ idx+1 }}</div>
-            </div>
-            <div v-if="s.ok" class="flex items-stretch">
-              <div class="stk-info">
-                <div class="row"><span>前一日收盤</span><b>{{ fp(s.close) }}</b></div>
-                <div class="row"><span>KO 出場價</span><b class="ko">{{ fp(s.close*koP/100) }}</b></div>
-                <div class="row"><span>Strike 履約</span><b>{{ fp(s.close*strikeP/100) }}</b></div>
-                <div class="row"><span>KI 下限價</span><b class="ki">{{ kiP>0 ? fp(s.close*kiP/100) : '無' }}</b></div>
+            <div class="flex justify-between items-center px-3 py-2.5" style="background:var(--navy)">
+              <div class="text-white leading-tight min-w-0">
+                <span class="text-lg font-black">{{ s.code }}</span>
+                <span class="text-sm font-bold opacity-85 ml-1">{{ s.name }}</span>
+                <span v-if="s.ok" class="opacity-75 ml-1 whitespace-nowrap" style="font-size:12px">· 收盤價 {{ fp(s.close) }} 元</span>
               </div>
-              <div class="stk-chart" v-html="s.svg"></div>
+              <div class="text-[10px] font-black text-white/60 whitespace-nowrap ml-2">標的 {{ idx+1 }}</div>
             </div>
+            <div v-if="s.ok" class="stk-chart-full" v-html="s.svg"></div>
             <div v-else class="p-5 text-center text-gray-400 font-bold text-sm">此標的暫時無法取得走勢資料<br><span class="text-xs text-gray-300">（請確認代號，或稍後再試）</span></div>
           </div>
         </div>
@@ -270,7 +268,7 @@ createApp({
     },
     lastClose(arr){ for(let i=arr.length-1;i>=0;i--){ if(arr[i]!=null) return arr[i]; } return 0; },
     chartSVG(hist, close){
-      const W=480,H=228,padL=6,padR=74,padT=15,padB=26;
+      const W=480,H=172,padL=142,padR=48,padT=13,padB=22;
       const nowSec=Math.floor(Date.now()/1000), cutoff=nowSec-274*86400;
       const pts=[];
       for(let j=0;j<hist.timestamp.length;j++){ const t=hist.timestamp[j],c=hist.close[j]; if(t>=cutoff&&c!=null&&c>0) pts.push({t,c}); }
@@ -286,9 +284,10 @@ createApp({
       let line='',area='M'+fx(X(tMin))+' '+fx(H-padB)+' ';
       pts.forEach((p,k)=>{ const xx=fx(X(p.t)),yy=fx(Y(p.c)); line+=(k?'L':'M')+xx+' '+yy+' '; area+='L'+xx+' '+yy+' '; });
       area+='L'+fx(X(tMax))+' '+fx(H-padB)+' Z';
-      const bl=(v,color,label,pctv,dash)=> v==null?'' :
+      const bl=(v,color,name,pctv,dash)=> v==null?'' :
         '<line x1="'+padL+'" y1="'+fx(Y(v))+'" x2="'+(W-padR)+'" y2="'+fx(Y(v))+'" stroke="'+color+'" stroke-width="1.6" '+(dash?'stroke-dasharray="5 3" ':'')+'opacity="0.9"/>'+
-        '<text x="'+(W-padR+5)+'" y="'+fx(Y(v)+3.5)+'" fill="'+color+'" font-size="12" font-weight="800">'+label+' '+pctv+'%</text>';
+        '<text x="'+(padL-9)+'" y="'+fx(Y(v)+4.5)+'" text-anchor="end" fill="'+color+'" font-size="13" font-weight="800">'+name+'　'+this.fp(v)+'</text>'+
+        '<text x="'+(W-padR+5)+'" y="'+fx(Y(v)+3.5)+'" fill="'+color+'" font-size="11.5" font-weight="800">'+(pctv!=null?pctv+'%':'')+'</text>';
       let grid='';
       for(let k=0;k<=4;k++){ const v=vMin+(vMax-vMin)*k/4; grid+='<line x1="'+padL+'" y1="'+fx(Y(v))+'" x2="'+(W-padR)+'" y2="'+fx(Y(v))+'" stroke="#eef1f5" stroke-width="0.8"/>'; }
       for(let k=0;k<=4;k++){ const t=tMin+(tMax-tMin)*k/4; const d=new Date(t*1000); grid+='<text x="'+fx(X(t))+'" y="'+(H-padB+14)+'" text-anchor="middle" fill="#94a3b8" font-size="9.5">'+d.getFullYear()+'/'+(d.getMonth()+1)+'</text>'; }
@@ -300,7 +299,7 @@ createApp({
       return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif">'+
         '<defs><linearGradient id="g'+Math.abs(close*1000|0)+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2563eb" stop-opacity="0.26"/><stop offset="1" stop-color="#2563eb" stop-opacity="0.01"/></linearGradient></defs>'+
         grid+'<path d="'+area+'" fill="url(#g'+Math.abs(close*1000|0)+')"/>'+
-        bl(ko,'#b8935a','KO',this.koP)+bl(strike,'#64748b','Strike',this.strikeP,true)+bl(ki,'#dc2626','KI',this.kiP,true)+
+        bl(ko,'#b8935a','KO 出場價',this.koP)+bl(strike,'#64748b','Strike 履約',this.strikeP,true)+bl(ki,'#dc2626','KI 下限價',this.kiP,true)+
         '<path d="'+line+'" fill="none" stroke="#1d4ed8" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>'+
         '<circle cx="'+lx+'" cy="'+ly+'" r="3.6" fill="#1d4ed8" stroke="#fff" stroke-width="1.5"/>'+hilo+'</svg>';
     },
