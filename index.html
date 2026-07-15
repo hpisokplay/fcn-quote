@@ -12,10 +12,14 @@
   *{ -webkit-tap-highlight-color:transparent; }
   body{ font-family:system-ui,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif; background:#eef1f5; color:var(--navy2); }
   .wrap{ max-width:520px; margin:0 auto; }
-  .fld label{ font-size:13px; font-weight:800; color:#64748b; letter-spacing:.3px; }
-  .fld input, .fld textarea{ width:100%; margin-top:6px; background:#f1f4f8; border:1.5px solid #e2e8f0; border-radius:14px; padding:13px 14px; font-weight:900; font-size:18px; color:var(--navy); outline:none; }
+  .fld label{ font-size:12.5px; font-weight:800; color:#64748b; letter-spacing:.3px; }
+  .fld input, .fld textarea{ width:100%; margin-top:5px; background:#f1f4f8; border:1.5px solid #e2e8f0; border-radius:12px; padding:10px 12px; font-weight:900; font-size:16px; color:var(--navy); outline:none; height:44px; }
+  .fld input[type=date]{ font-size:15px; }
   .fld input:focus, .fld textarea:focus{ border-color:#2563eb; background:#fff; }
   .fld input::placeholder, .fld textarea::placeholder{ color:#cbd5e1; font-weight:700; }
+  .code-box{ width:100%; height:48px; text-align:center; text-transform:uppercase; background:#f1f4f8; border:1.5px solid #e2e8f0; border-radius:12px; padding:2px; font-weight:900; font-size:15px; color:var(--navy); outline:none; }
+  .code-box:focus{ border-color:#2563eb; background:#fff; }
+  .code-box::placeholder{ color:#cbd5e1; font-weight:800; }
   .seg{ display:flex; background:#e8edf3; border-radius:16px; padding:5px; }
   .seg button{ flex:1; padding:12px; border-radius:12px; font-weight:900; font-size:17px; color:#64748b; transition:.15s; }
   .seg button.on{ background:#fff; color:var(--navy); box-shadow:0 2px 8px rgba(15,39,72,.12); }
@@ -50,18 +54,20 @@
       <p class="text-[11px] font-black tracking-[3px] mt-1" style="color:#94a3b8">PRECISION&nbsp;DATA&nbsp;ENGINE</p>
     </div>
 
-    <div class="bg-white rounded-3xl shadow-sm p-5 space-y-5">
+    <div class="bg-white rounded-3xl shadow-sm p-4 space-y-4">
       <div class="seg">
         <button :class="{on: market==='US'}" @click="market='US'">US 美股</button>
         <button :class="{on: market==='JP'}" @click="market='JP'">JP 日股</button>
       </div>
 
       <div class="fld">
-        <label>連結標的代碼<span class="text-gray-400 font-bold">（{{ market==='US' ? '美股請輸入代號' : '日股輸入數字代碼即可' }}，多檔用逗號分隔）</span></label>
-        <textarea v-model="codesRaw" rows="2" :placeholder="market==='US' ? '例：NVDA, TSM, AVGO' : '例：7011, 6857, 7013'" class="text-center tracking-wide"></textarea>
+        <label>連結標的代碼<span class="text-gray-400 font-bold">（最多 5 檔，{{ market==='US' ? '輸入代號' : '輸入數字代碼' }}，空白＝不列入）</span></label>
+        <div class="grid grid-cols-5 gap-2 mt-1.5">
+          <input v-for="(c,i) in codes" :key="i" v-model="codes[i]" :placeholder="'①②③④⑤'[i]" class="code-box">
+        </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-2 gap-3">
         <div class="fld"><label>發行機構</label><input v-model="issuer" placeholder="例：MS" class="text-center uppercase"></div>
         <div class="fld"><label>報價日期</label><input type="date" v-model="quoteDate"></div>
         <div class="fld"><label>天期（月）</label><input type="number" v-model.number="tenor" placeholder="6" class="text-center"></div>
@@ -157,8 +163,8 @@ createApp({
     const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     return {
       view:'input', market:'US',
-      codesRaw:'', issuer:'', quoteDate:iso,
-      tenor:6, coupon:12, koP:100, strikeP:75, kiP:55, lockM:1, eki:false,
+      codes:['','','','',''], issuer:'', quoteDate:iso,
+      tenor:null, coupon:null, koP:null, strikeP:null, kiP:null, lockM:null, eki:false,
       loading:false, err:'', results:[], db:null
     };
   },
@@ -201,7 +207,7 @@ createApp({
       return null;
     },
     async generate(){
-      const codes = this.codesRaw.split(/[,，\s]+/).map(x=>x.trim()).filter(Boolean);
+      const codes = this.codes.map(x=>String(x||'').trim()).filter(Boolean);
       if(!codes.length){ this.err='請先輸入至少一檔標的代碼'; return; }
       this.err=''; this.loading=true;
       try{
@@ -230,7 +236,7 @@ createApp({
       const pts=[];
       for(let j=0;j<hist.timestamp.length;j++){ const t=hist.timestamp[j],c=hist.close[j]; if(t>=cutoff&&c!=null&&c>0) pts.push({t,c}); }
       if(pts.length<2) return '<div style="height:180px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-weight:700">走勢資料不足</div>';
-      const ko=close*this.koP/100, strike=close*this.strikeP/100, ki=this.kiP>0?close*this.kiP/100:null;
+      const ko=this.koP>0?close*this.koP/100:null, strike=this.strikeP>0?close*this.strikeP/100:null, ki=this.kiP>0?close*this.kiP/100:null;
       const bar=[ko,strike,ki].filter(v=>v!=null);
       let vMin=Math.min(...pts.map(p=>p.c),...bar), vMax=Math.max(...pts.map(p=>p.c),...bar);
       const gap=(vMax-vMin)||1; vMin-=gap*0.08; vMax+=gap*0.10;
