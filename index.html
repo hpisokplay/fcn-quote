@@ -34,6 +34,15 @@
   .cond .vl{ background:#fff; text-align:center; color:var(--navy); }
   .cond .hl{ color:#1d4ed8; }
   .cond .rd{ color:#dc2626; }
+  .img-modal{ position:fixed; inset:0; z-index:9999; background:rgba(15,23,42,.92); display:flex; flex-direction:column; }
+  .img-modal-bar{ flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px calc(14px + env(safe-area-inset-top)) 16px; }
+  .img-modal-bar .imt{ color:#fff; font-weight:800; font-size:15px; line-height:1.35; }
+  .img-modal-bar .imt small{ display:block; color:#cbd5e1; font-weight:600; font-size:12px; margin-top:3px; }
+  .img-modal-bar .imx{ flex:0 0 auto; width:40px; height:40px; border-radius:12px; background:rgba(255,255,255,.14); color:#fff; font-size:20px; }
+  .img-modal-scroll{ flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:0 14px calc(24px + env(safe-area-inset-bottom)) 14px; text-align:center; }
+  .img-modal-scroll .iml{ color:#93c5fd; font-weight:800; font-size:13px; margin:16px 0 0; }
+  .img-modal-scroll img{ width:100%; max-width:760px; display:block; margin:10px auto; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,.5); }
+  .img-modal-scroll .imf{ display:inline-block; margin:20px auto 8px; padding:11px 40px; border-radius:14px; background:#fff; color:var(--navy); font-weight:900; font-size:16px; }
   .undl-tbl{ width:100%; border-collapse:collapse; }
   .undl-tbl th{ background:var(--navy); color:#fff; text-align:center; font-weight:900; font-size:15px; padding:11px; border:1.5px solid #111827; }
   .undl-tbl td{ text-align:center; font-weight:900; font-size:15px; color:#0f2748; padding:12px; border:1.5px solid #111827; }
@@ -142,6 +151,18 @@
       </div>
     </div>
 
+    <div v-if="imgModal" class="img-modal no-print" @click.self="imgModal=false">
+      <div class="img-modal-bar">
+        <div class="imt">長按圖片即可儲存到相簿<small>共 2 張：報價表、走勢圖</small></div>
+        <button class="imx" @click="imgModal=false"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="img-modal-scroll">
+        <div class="iml">① 報價表</div><img :src="img1">
+        <div class="iml">② 走勢圖</div><img :src="img2">
+        <div class="imf" @click="imgModal=false">關閉</div>
+      </div>
+    </div>
+
     <div class="sheet bg-white rounded-3xl shadow-sm overflow-hidden">
       <!-- ===== 第 1 頁：詢價單 ===== -->
       <div class="pg1">
@@ -207,7 +228,7 @@ createApp({
       view:'input', market:'US',
       codes:['','','','',''], issuer:'', quoteDate:iso,
       tenor:null, coupon:null, koP:null, strikeP:null, kiP:null, lockM:null, eki:false,
-      loading:false, imaging:false, err:'', results:[], db:null
+      loading:false, imaging:false, err:'', results:[], db:null, imgModal:false, img1:'', img2:''
     };
   },
   computed:{
@@ -318,20 +339,8 @@ createApp({
         const opt={ scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false };
         const c1=await html2canvas(pg1,opt);
         const c2=await html2canvas(pg2,opt);
-        const img1=c1.toDataURL('image/png'), img2=c2.toDataURL('image/png');
-        const w=window.open('','_blank');
-        if(!w){ this.imaging=false; alert('請允許彈出視窗以開啟圖片'); return; }
-        w.document.open();
-        w.document.write('<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FCN報價表 · 圖片</title>'+
-          '<style>body{margin:0;background:#334155;font-family:system-ui,"PingFang TC","Microsoft JhengHei",sans-serif;text-align:center}'+
-          '.tip{color:#fff;font-weight:800;font-size:15px;padding:14px 12px 4px}.tip small{display:block;color:#cbd5e1;font-weight:600;font-size:12px;margin-top:4px}'+
-          'img{width:100%;max-width:760px;display:block;margin:12px auto;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.35)}'+
-          '.lb{color:#93c5fd;font-weight:800;font-size:13px;margin-top:14px}</style></head><body>'+
-          '<div class="tip">長按（或右鍵）圖片即可儲存<small>共 2 張：報價表、走勢圖</small></div>'+
-          '<div class="lb">① 報價表</div><img src="'+img1+'">'+
-          '<div class="lb">② 走勢圖</div><img src="'+img2+'">'+
-          '</body></html>');
-        w.document.close();
+        this.img1=c1.toDataURL('image/png'); this.img2=c2.toDataURL('image/png');
+        this.imgModal=true;
       }catch(e){ alert('生圖失敗，請稍後再試'); }
       finally{ this.imaging=false; }
     }
