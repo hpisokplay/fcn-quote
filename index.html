@@ -26,21 +26,31 @@
   .seg.gold button.on{ color:var(--gold); }
   .fade{ animation:fade .35s ease; } @keyframes fade{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
   /* 詢價單條件表 */
-  .cond{ width:100%; border-collapse:collapse; font-size:15px; }
-  .cond td{ border:1px solid #cfd6e0; padding:11px 8px; font-weight:800; }
+  .cond{ width:100%; border-collapse:collapse; font-size:13px; }
+  .cond td{ border:1px solid #cfd6e0; padding:8px 6px; font-weight:800; }
   .cond .lb{ background:var(--navy); color:#fff; text-align:center; width:26%; font-weight:800; }
   .cond .vl{ background:#fff; text-align:center; color:var(--navy); }
   .cond .hl{ color:#1d4ed8; }
   .cond .rd{ color:#dc2626; }
   .subttl{ background:#e7ecf4; color:var(--navy); text-align:center; font-weight:900; padding:9px; font-size:15px; }
-  .undl{ text-align:center; padding:12px; font-weight:900; font-size:17px; border-bottom:1px solid #e2e8f0; }
+  .undl{ text-align:center; padding:10px; font-weight:900; font-size:15px; border-bottom:1px solid #e2e8f0; }
   .undl small{ color:#64748b; font-weight:700; }
+  /* 走勢圖橫帶：數字在左、圖在右 */
+  .stk-info{ width:39%; flex:0 0 39%; border-right:1px solid #eef1f5; padding:7px 9px; }
+  .stk-info .row{ padding:6px 0; border-bottom:1px solid #f1f5f9; }
+  .stk-info .row:last-child{ border-bottom:none; }
+  .stk-info .row span{ display:block; font-size:11px; font-weight:800; color:#64748b; }
+  .stk-info .row b{ display:block; font-size:17px; font-weight:900; color:var(--navy); margin-top:1px; letter-spacing:.3px; }
+  .stk-info .row b.ko{ color:var(--gold); } .stk-info .row b.ki{ color:#dc2626; }
+  .stk-chart{ flex:1; min-width:0; display:flex; align-items:center; padding:3px 3px 3px 0; }
   @media print{
-    @page{ size:A4 portrait; margin:10mm; }
+    @page{ size:A4 portrait; margin:9mm; }
     body{ background:#fff; }
     .no-print{ display:none !important; }
     .wrap{ max-width:none; }
     .sheet{ box-shadow:none !important; border:none !important; }
+    .pg2{ page-break-before:always; }
+    .stkband{ page-break-inside:avoid; }
   }
 </style>
 </head>
@@ -103,49 +113,54 @@
     </div>
 
     <div class="sheet bg-white rounded-3xl shadow-sm overflow-hidden">
-      <!-- 抬頭 -->
-      <div class="text-center pt-6 pb-4 px-5" style="border-bottom:3px solid var(--navy)">
-        <h1 class="text-2xl font-black" style="color:var(--navy)">FCN 專業報價單</h1>
-        <p class="text-[10px] font-black tracking-[3px] mt-1" style="color:var(--gold)">FIXED COUPON NOTE · QUOTE</p>
-      </div>
-
-      <!-- 條件表 -->
-      <div class="p-4">
-        <table class="cond">
-          <tr><td class="lb">報價日期</td><td class="vl" colspan="3">{{ fmtDate(quoteDate) }}</td></tr>
-          <tr><td class="lb">發行機構</td><td class="vl">{{ issuer || '—' }}</td><td class="lb">提前出場價 (KO)</td><td class="vl hl">{{ pct(koP) }}</td></tr>
-          <tr><td class="lb">計價幣別</td><td class="vl">{{ ccy }}</td><td class="lb">履約價 (Strike)</td><td class="vl hl">{{ pct(strikeP) }}</td></tr>
-          <tr><td class="lb">交易類型</td><td class="vl">FCN</td><td class="lb">觸及生效價<br>{{ eki ? 'EKI' : 'KI' }}</td><td class="vl rd">{{ kiP>0 ? pct(kiP) : '無' }}</td></tr>
-          <tr><td class="lb">天期（月）</td><td class="vl">{{ tenor || '—' }}</td><td class="lb">保證領息（月）</td><td class="vl rd">{{ lockM || '—' }}</td></tr>
-          <tr><td class="lb">年化報酬率</td><td class="vl">{{ pct(coupon) }}</td><td class="lb">觀察頻率</td><td class="vl rd">{{ eki ? '到期觀察' : '每日觀察' }}</td></tr>
-        </table>
-        <div class="subttl mt-3 rounded-t-lg">連結標的</div>
-        <div>
-          <div v-for="s in results" :key="s.code" class="undl"><span style="color:#1d4ed8">{{ s.code }}</span> <small>{{ s.name }}</small></div>
+      <!-- ===== 第 1 頁：詢價單 ===== -->
+      <div class="pg1">
+        <div class="text-center pt-6 pb-4 px-5" style="border-bottom:3px solid var(--navy)">
+          <h1 class="text-2xl font-black" style="color:var(--navy)">FCN 專業報價單</h1>
+          <p class="text-[10px] font-black tracking-[3px] mt-1" style="color:var(--gold)">FIXED COUPON NOTE · QUOTE</p>
         </div>
+        <div class="p-4">
+          <table class="cond">
+            <tr><td class="lb">報價日期</td><td class="vl" colspan="3">{{ fmtDate(quoteDate) }}</td></tr>
+            <tr><td class="lb">發行機構</td><td class="vl">{{ issuer || '—' }}</td><td class="lb">提前出場價 (KO)</td><td class="vl hl">{{ pct(koP) }}</td></tr>
+            <tr><td class="lb">計價幣別</td><td class="vl">{{ ccy }}</td><td class="lb">履約價 (Strike)</td><td class="vl hl">{{ pct(strikeP) }}</td></tr>
+            <tr><td class="lb">交易類型</td><td class="vl">FCN</td><td class="lb">觸及生效價 {{ eki ? 'EKI' : 'KI' }}</td><td class="vl rd">{{ kiP>0 ? pct(kiP) : '無' }}</td></tr>
+            <tr><td class="lb">天期（月）</td><td class="vl">{{ tenor || '—' }}</td><td class="lb">保證領息（月）</td><td class="vl rd">{{ lockM || '—' }}</td></tr>
+            <tr><td class="lb">年化報酬率</td><td class="vl">{{ pct(coupon) }}</td><td class="lb">觀察頻率</td><td class="vl rd">{{ eki ? '到期觀察' : '每日觀察' }}</td></tr>
+          </table>
+          <div class="subttl mt-3 rounded-t-lg">連結標的</div>
+          <div>
+            <div v-for="s in results" :key="s.code" class="undl"><span style="color:#1d4ed8">{{ s.code }}</span> <small>{{ s.name }}</small></div>
+          </div>
+        </div>
+        <div class="text-center text-[10px] text-gray-400 font-bold px-5 pb-5 leading-relaxed">◎ 期初＝標的前一日收盤價，KO／Strike／KI 價為收盤×對應百分比<br>◎ 本報價僅供內部參考，一切以實際成交狀況為主</div>
       </div>
 
-      <!-- 每檔：資料 + 走勢圖 -->
-      <div class="px-4 pb-5 space-y-4">
-        <div v-for="(s,idx) in results" :key="'c'+s.code" class="rounded-2xl border border-gray-200 overflow-hidden">
-          <div class="flex justify-between items-center px-4 py-3" style="background:var(--navy)">
-            <div class="text-white"><span class="text-xl font-black">{{ s.code }}</span> <span class="text-sm font-bold opacity-70">{{ s.name }}</span></div>
-            <div class="text-[11px] font-black text-white/70">標的 {{ idx+1 }}</div>
-          </div>
-          <div v-if="s.ok" class="p-3">
-            <div class="grid grid-cols-4 gap-1 text-center mb-2">
-              <div><div class="text-[11px] font-bold text-gray-400">前一日收盤</div><div class="text-lg font-black" style="color:var(--navy)">{{ fp(s.close) }}</div></div>
-              <div><div class="text-[11px] font-bold" style="color:var(--gold)">KO 出場</div><div class="text-lg font-black" style="color:var(--gold)">{{ fp(s.close*koP/100) }}</div></div>
-              <div><div class="text-[11px] font-bold text-slate-400">Strike 履約</div><div class="text-lg font-black text-slate-600">{{ fp(s.close*strikeP/100) }}</div></div>
-              <div><div class="text-[11px] font-bold text-red-400">KI 下限</div><div class="text-lg font-black text-red-600">{{ kiP>0 ? fp(s.close*kiP/100) : '無' }}</div></div>
+      <!-- ===== 第 2 頁：走勢圖 ===== -->
+      <div class="pg2 px-4 pb-5">
+        <div class="text-center py-4 mb-1" style="border-bottom:2px solid var(--navy)">
+          <h2 class="text-lg font-black" style="color:var(--navy)">標的走勢圖 <span class="text-xs font-bold text-gray-400">· 近 9 個月每日收盤</span></h2>
+        </div>
+        <div class="space-y-3 mt-3">
+          <div v-for="(s,idx) in results" :key="'c'+s.code" class="stkband rounded-2xl border border-gray-200 overflow-hidden">
+            <div class="flex justify-between items-center px-3 py-2" style="background:var(--navy)">
+              <div class="text-white"><span class="text-lg font-black">{{ s.code }}</span> <span class="text-xs font-bold opacity-70">{{ s.name }}</span></div>
+              <div class="text-[10px] font-black text-white/60">標的 {{ idx+1 }}</div>
             </div>
-            <div v-html="s.svg"></div>
+            <div v-if="s.ok" class="flex items-stretch">
+              <div class="stk-info">
+                <div class="row"><span>前一日收盤</span><b>{{ fp(s.close) }}</b></div>
+                <div class="row"><span>KO 出場價</span><b class="ko">{{ fp(s.close*koP/100) }}</b></div>
+                <div class="row"><span>Strike 履約</span><b>{{ fp(s.close*strikeP/100) }}</b></div>
+                <div class="row"><span>KI 下限價</span><b class="ki">{{ kiP>0 ? fp(s.close*kiP/100) : '無' }}</b></div>
+              </div>
+              <div class="stk-chart" v-html="s.svg"></div>
+            </div>
+            <div v-else class="p-5 text-center text-gray-400 font-bold text-sm">此標的暫時無法取得走勢資料<br><span class="text-xs text-gray-300">（請確認代號，或稍後再試）</span></div>
           </div>
-          <div v-else class="p-6 text-center text-gray-400 font-bold text-sm">此標的暫時無法取得走勢資料<br><span class="text-xs text-gray-300">（請確認代號，或稍後再試）</span></div>
         </div>
+        <div class="text-center text-[10px] text-gray-400 font-bold pt-4 leading-relaxed">◎ 走勢為標的近 9 個月每日收盤價 ◎ KO／Strike／KI 為換算後之價格水準</div>
       </div>
-
-      <div class="text-center text-[10px] text-gray-400 font-bold px-5 pb-5 leading-relaxed">◎ 走勢為標的近 9 個月每日收盤價 ◎ KO／Strike／KI 為換算後之價格水準<br>◎ 本報價僅供內部參考，一切以實際成交狀況為主</div>
     </div>
     <div class="no-print h-6"></div>
   </div>
@@ -231,7 +246,7 @@ createApp({
     },
     lastClose(arr){ for(let i=arr.length-1;i>=0;i--){ if(arr[i]!=null) return arr[i]; } return 0; },
     chartSVG(hist, close){
-      const W=760,H=300,padL=8,padR=92,padT=22,padB=34;
+      const W=680,H=250,padL=6,padR=78,padT=20,padB=28;
       const nowSec=Math.floor(Date.now()/1000), cutoff=nowSec-274*86400;
       const pts=[];
       for(let j=0;j<hist.timestamp.length;j++){ const t=hist.timestamp[j],c=hist.close[j]; if(t>=cutoff&&c!=null&&c>0) pts.push({t,c}); }
@@ -249,14 +264,14 @@ createApp({
       area+='L'+fx(X(tMax))+' '+fx(H-padB)+' Z';
       const bl=(v,color,label,pctv,dash)=> v==null?'' :
         '<line x1="'+padL+'" y1="'+fx(Y(v))+'" x2="'+(W-padR)+'" y2="'+fx(Y(v))+'" stroke="'+color+'" stroke-width="1.6" '+(dash?'stroke-dasharray="5 3" ':'')+'opacity="0.9"/>'+
-        '<text x="'+(W-padR+7)+'" y="'+fx(Y(v)+4)+'" fill="'+color+'" font-size="12.5" font-weight="800">'+label+' '+pctv+'%</text>';
+        '<text x="'+(W-padR+7)+'" y="'+fx(Y(v)+4)+'" fill="'+color+'" font-size="15" font-weight="800">'+label+' '+pctv+'%</text>';
       let grid='';
-      for(let k=0;k<=4;k++){ const v=vMin+(vMax-vMin)*k/4; grid+='<line x1="'+padL+'" y1="'+fx(Y(v))+'" x2="'+(W-padR)+'" y2="'+fx(Y(v))+'" stroke="#eef1f5" stroke-width="1"/><text x="'+(W-padR+7)+'" y="'+fx(Y(v)-3)+'" fill="#cbd5e1" font-size="10">'+this.fp(v)+'</text>'; }
-      for(let k=0;k<=4;k++){ const t=tMin+(tMax-tMin)*k/4; const d=new Date(t*1000); grid+='<text x="'+fx(X(t))+'" y="'+(H-padB+18)+'" text-anchor="middle" fill="#94a3b8" font-size="10.5">'+d.getFullYear()+'/'+(d.getMonth()+1)+'</text>'; }
+      for(let k=0;k<=4;k++){ const v=vMin+(vMax-vMin)*k/4; grid+='<line x1="'+padL+'" y1="'+fx(Y(v))+'" x2="'+(W-padR)+'" y2="'+fx(Y(v))+'" stroke="#eef1f5" stroke-width="1"/>'; }
+      for(let k=0;k<=4;k++){ const t=tMin+(tMax-tMin)*k/4; const d=new Date(t*1000); grid+='<text x="'+fx(X(t))+'" y="'+(H-padB+16)+'" text-anchor="middle" fill="#94a3b8" font-size="12">'+d.getFullYear()+'/'+(d.getMonth()+1)+'</text>'; }
       let hi=pts[0],lo=pts[0]; pts.forEach(p=>{ if(p.c>hi.c)hi=p; if(p.c<lo.c)lo=p; });
       const anc=xx=> xx>W-padR-40?'end':(xx<padL+40?'start':'middle');
-      const hilo='<circle cx="'+fx(X(hi.t))+'" cy="'+fx(Y(hi.c))+'" r="2.6" fill="#0f2748"/><text x="'+fx(X(hi.t))+'" y="'+fx(Y(hi.c)-7)+'" text-anchor="'+anc(X(hi.t))+'" fill="#334155" font-size="10.5" font-weight="700">最高 '+this.fp(hi.c)+'</text>'+
-        '<circle cx="'+fx(X(lo.t))+'" cy="'+fx(Y(lo.c))+'" r="2.6" fill="#0f2748"/><text x="'+fx(X(lo.t))+'" y="'+fx(Y(lo.c)+14)+'" text-anchor="'+anc(X(lo.t))+'" fill="#64748b" font-size="10.5" font-weight="700">最低 '+this.fp(lo.c)+'</text>';
+      const hilo='<circle cx="'+fx(X(hi.t))+'" cy="'+fx(Y(hi.c))+'" r="3" fill="#0f2748"/><text x="'+fx(X(hi.t))+'" y="'+fx(Y(hi.c)-7)+'" text-anchor="'+anc(X(hi.t))+'" fill="#334155" font-size="12" font-weight="700">最高 '+this.fp(hi.c)+'</text>'+
+        '<circle cx="'+fx(X(lo.t))+'" cy="'+fx(Y(lo.c))+'" r="3" fill="#0f2748"/><text x="'+fx(X(lo.t))+'" y="'+fx(Y(lo.c)+15)+'" text-anchor="'+anc(X(lo.t))+'" fill="#64748b" font-size="12" font-weight="700">最低 '+this.fp(lo.c)+'</text>';
       const lx=fx(X(tMax)),ly=fx(Y(pts[pts.length-1].c));
       return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif">'+
         '<defs><linearGradient id="g'+Math.abs(close*1000|0)+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2563eb" stop-opacity="0.26"/><stop offset="1" stop-color="#2563eb" stop-opacity="0.01"/></linearGradient></defs>'+
