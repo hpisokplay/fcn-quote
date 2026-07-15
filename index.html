@@ -36,13 +36,13 @@
   .undl{ text-align:center; padding:10px; font-weight:900; font-size:15px; border-bottom:1px solid #e2e8f0; }
   .undl small{ color:#64748b; font-weight:700; }
   /* 走勢圖橫帶：數字在左、圖在右 */
-  .stk-info{ width:39%; flex:0 0 39%; border-right:1px solid #eef1f5; padding:7px 9px; }
-  .stk-info .row{ padding:6px 0; border-bottom:1px solid #f1f5f9; }
+  .stk-info{ width:29%; flex:0 0 29%; border-right:1px solid #eef1f5; padding:6px 7px; }
+  .stk-info .row{ padding:3.5px 0; border-bottom:1px solid #f1f5f9; }
   .stk-info .row:last-child{ border-bottom:none; }
-  .stk-info .row span{ display:block; font-size:11px; font-weight:800; color:#64748b; }
-  .stk-info .row b{ display:block; font-size:17px; font-weight:900; color:var(--navy); margin-top:1px; letter-spacing:.3px; }
+  .stk-info .row span{ display:block; font-size:9.5px; font-weight:800; color:#64748b; }
+  .stk-info .row b{ display:block; font-size:14px; font-weight:900; color:var(--navy); margin-top:0; letter-spacing:.2px; }
   .stk-info .row b.ko{ color:var(--gold); } .stk-info .row b.ki{ color:#dc2626; }
-  .stk-chart{ flex:1; min-width:0; display:flex; align-items:center; padding:3px 3px 3px 0; }
+  .stk-chart{ flex:1; min-width:0; display:flex; align-items:center; padding:4px 4px 4px 2px; }
   @media print{
     @page{ size:A4 portrait; margin:9mm; }
     body{ background:#fff; }
@@ -162,7 +162,10 @@
         <div class="text-center text-[10px] text-gray-400 font-bold pt-4 leading-relaxed">◎ 走勢為標的近 9 個月每日收盤價 ◎ KO／Strike／KI 為換算後之價格水準</div>
       </div>
     </div>
-    <div class="no-print h-6"></div>
+    <div class="no-print mt-4 mb-10">
+      <button @click="printOut" class="w-full text-white font-black text-lg py-4 rounded-2xl shadow-lg" style="background:linear-gradient(135deg,#1d4ed8,#0f2748)"><i class="fa-solid fa-print mr-2"></i>列印（正反面）</button>
+      <p class="text-center text-[11px] text-gray-400 font-bold mt-2 leading-relaxed">按下後選「列印」或「儲存成 PDF」→ 共 <b class="text-slate-500">2 頁直式</b>：第 1 頁報價單、第 2 頁走勢圖，可正反面印給客戶</p>
+    </div>
   </div>
 
 </div>
@@ -246,7 +249,7 @@ createApp({
     },
     lastClose(arr){ for(let i=arr.length-1;i>=0;i--){ if(arr[i]!=null) return arr[i]; } return 0; },
     chartSVG(hist, close){
-      const W=680,H=250,padL=6,padR=78,padT=20,padB=28;
+      const W=480,H=212,padL=6,padR=70,padT=15,padB=24;
       const nowSec=Math.floor(Date.now()/1000), cutoff=nowSec-274*86400;
       const pts=[];
       for(let j=0;j<hist.timestamp.length;j++){ const t=hist.timestamp[j],c=hist.close[j]; if(t>=cutoff&&c!=null&&c>0) pts.push({t,c}); }
@@ -264,20 +267,20 @@ createApp({
       area+='L'+fx(X(tMax))+' '+fx(H-padB)+' Z';
       const bl=(v,color,label,pctv,dash)=> v==null?'' :
         '<line x1="'+padL+'" y1="'+fx(Y(v))+'" x2="'+(W-padR)+'" y2="'+fx(Y(v))+'" stroke="'+color+'" stroke-width="1.6" '+(dash?'stroke-dasharray="5 3" ':'')+'opacity="0.9"/>'+
-        '<text x="'+(W-padR+7)+'" y="'+fx(Y(v)+4)+'" fill="'+color+'" font-size="15" font-weight="800">'+label+' '+pctv+'%</text>';
+        '<text x="'+(W-padR+5)+'" y="'+fx(Y(v)+3.5)+'" fill="'+color+'" font-size="12" font-weight="800">'+label+' '+pctv+'%</text>';
       let grid='';
-      for(let k=0;k<=4;k++){ const v=vMin+(vMax-vMin)*k/4; grid+='<line x1="'+padL+'" y1="'+fx(Y(v))+'" x2="'+(W-padR)+'" y2="'+fx(Y(v))+'" stroke="#eef1f5" stroke-width="1"/>'; }
-      for(let k=0;k<=4;k++){ const t=tMin+(tMax-tMin)*k/4; const d=new Date(t*1000); grid+='<text x="'+fx(X(t))+'" y="'+(H-padB+16)+'" text-anchor="middle" fill="#94a3b8" font-size="12">'+d.getFullYear()+'/'+(d.getMonth()+1)+'</text>'; }
+      for(let k=0;k<=4;k++){ const v=vMin+(vMax-vMin)*k/4; grid+='<line x1="'+padL+'" y1="'+fx(Y(v))+'" x2="'+(W-padR)+'" y2="'+fx(Y(v))+'" stroke="#eef1f5" stroke-width="0.8"/>'; }
+      for(let k=0;k<=4;k++){ const t=tMin+(tMax-tMin)*k/4; const d=new Date(t*1000); grid+='<text x="'+fx(X(t))+'" y="'+(H-padB+14)+'" text-anchor="middle" fill="#94a3b8" font-size="9.5">'+d.getFullYear()+'/'+(d.getMonth()+1)+'</text>'; }
       let hi=pts[0],lo=pts[0]; pts.forEach(p=>{ if(p.c>hi.c)hi=p; if(p.c<lo.c)lo=p; });
-      const anc=xx=> xx>W-padR-40?'end':(xx<padL+40?'start':'middle');
-      const hilo='<circle cx="'+fx(X(hi.t))+'" cy="'+fx(Y(hi.c))+'" r="3" fill="#0f2748"/><text x="'+fx(X(hi.t))+'" y="'+fx(Y(hi.c)-7)+'" text-anchor="'+anc(X(hi.t))+'" fill="#334155" font-size="12" font-weight="700">最高 '+this.fp(hi.c)+'</text>'+
-        '<circle cx="'+fx(X(lo.t))+'" cy="'+fx(Y(lo.c))+'" r="3" fill="#0f2748"/><text x="'+fx(X(lo.t))+'" y="'+fx(Y(lo.c)+15)+'" text-anchor="'+anc(X(lo.t))+'" fill="#64748b" font-size="12" font-weight="700">最低 '+this.fp(lo.c)+'</text>';
+      const anc=xx=> xx>W-padR-34?'end':(xx<padL+34?'start':'middle');
+      const hilo='<circle cx="'+fx(X(hi.t))+'" cy="'+fx(Y(hi.c))+'" r="2.4" fill="#0f2748"/><text x="'+fx(X(hi.t))+'" y="'+fx(Y(hi.c)-6)+'" text-anchor="'+anc(X(hi.t))+'" fill="#334155" font-size="9.5" font-weight="700">最高 '+this.fp(hi.c)+'</text>'+
+        '<circle cx="'+fx(X(lo.t))+'" cy="'+fx(Y(lo.c))+'" r="2.4" fill="#0f2748"/><text x="'+fx(X(lo.t))+'" y="'+fx(Y(lo.c)+13)+'" text-anchor="'+anc(X(lo.t))+'" fill="#64748b" font-size="9.5" font-weight="700">最低 '+this.fp(lo.c)+'</text>';
       const lx=fx(X(tMax)),ly=fx(Y(pts[pts.length-1].c));
       return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="system-ui, sans-serif">'+
         '<defs><linearGradient id="g'+Math.abs(close*1000|0)+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2563eb" stop-opacity="0.26"/><stop offset="1" stop-color="#2563eb" stop-opacity="0.01"/></linearGradient></defs>'+
         grid+'<path d="'+area+'" fill="url(#g'+Math.abs(close*1000|0)+')"/>'+
         bl(ko,'#b8935a','KO',this.koP)+bl(strike,'#64748b','Strike',this.strikeP,true)+bl(ki,'#dc2626','KI',this.kiP,true)+
-        '<path d="'+line+'" fill="none" stroke="#1d4ed8" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
+        '<path d="'+line+'" fill="none" stroke="#1d4ed8" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>'+
         '<circle cx="'+lx+'" cy="'+ly+'" r="3.6" fill="#1d4ed8" stroke="#fff" stroke-width="1.5"/>'+hilo+'</svg>';
     },
     printOut(){ window.print(); }
